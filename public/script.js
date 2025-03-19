@@ -113,7 +113,7 @@ function toggleAutoRecording() {
 }
 
 function stopAutoRecording() {
-    // CHANGE: Save any partial transcript before stopping
+    // Save any partial transcript before stopping
     if (isAutoRecording && currentTranscript && currentTranscript.trim() !== "") {
         saveText(currentTranscript.trim());
         document.getElementById('text-output').innerText = `Auto-recording stopped. Last recording saved: "${currentTranscript.trim()}"`;
@@ -166,31 +166,16 @@ function startAutomaticRecordingCycle() {
             recognition.lang = 'en-US';
             recognition.start();
             
-            // CHANGE: Add a small delay before allowing the stop on the last cycle
-            // This ensures the last cycle has time to capture speech
-            if (currentCycle >= totalCycles) {
-                // Prevent immediate stopping on the last cycle by delaying the cycle completion
-                autoRecordingInterval = setTimeout(() => {
-                    if (recognition && isAutoRecording) {
-                        try {
-                            recognition.stop();
-                        } catch (e) {
-                            console.error("Error stopping speech recognition:", e);
-                        }
+            // Set timeout to stop after specified duration
+            autoRecordingInterval = setTimeout(() => {
+                if (recognition && isAutoRecording) {
+                    try {
+                        recognition.stop();
+                    } catch (e) {
+                        console.error("Error stopping speech recognition:", e);
                     }
-                }, recordingDuration * 1000);
-            } else {
-                // For all other cycles, proceed as normal
-                autoRecordingInterval = setTimeout(() => {
-                    if (recognition && isAutoRecording) {
-                        try {
-                            recognition.stop();
-                        } catch (e) {
-                            console.error("Error stopping speech recognition:", e);
-                        }
-                    }
-                }, recordingDuration * 1000);
-            }
+                }
+            }, recordingDuration * 1000);
         } catch (e) {
             console.error("Error starting speech recognition:", e);
             alert("Error in auto-recording. Please try again.");
@@ -202,6 +187,116 @@ function startAutomaticRecordingCycle() {
         document.getElementById('text-output').innerText = "Auto-recording complete. All cycles finished.";
     }
 }
+
+// Populate the dropdown with stored texts
+function populateTextSelector() {
+    fetch('/texts')
+        .then(response => response.json())
+        .then(data => {
+            const selector = document.getElementById('text-selector');
+            
+            // Clear existing options (except the first placeholder)
+            while (selector.options.length > 1) {
+                selector.remove(1);
+            }
+            
+            // Add options for each stored text
+            data.forEach((text, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                
+                // Truncate text if it's too long for the dropdown
+                const truncatedText = text.length > 60 
+                    ? text.substring(0, 60) + '...' 
+                    : text;
+                    
+                option.textContent = truncatedText;
+                selector.appendChild(option);
+            });
+            
+            // Enable or disable the generate button based on selection
+            checkGenerateButtonState();
+        })
+        .catch(error => {
+            console.error("Error fetching texts for dropdown:", error);
+            alert("Couldn't load your stored texts. Please try again later.");
+        });
+}
+
+// Enable/disable generate button based on dropdown selection
+function checkGenerateButtonState() {
+    const selector = document.getElementById('text-selector');
+    const generateBtn = document.getElementById('generate-story-btn');
+    
+    generateBtn.disabled = !selector.value;
+}
+
+// Generate a story from the selected text
+function generateStory() {
+    const selector = document.getElementById('text-selector');
+    const selectedIndex = selector.value;
+    
+    if (!selectedIndex) {
+        alert("Please select a text first.");
+        return;
+    }
+    
+    // Show the story container and loading indicator
+    document.getElementById('story-container').classList.remove('hidden');
+    document.getElementById('story-loading').classList.remove('hidden');
+    document.getElementById('story-content').innerHTML = '';
+    
+    // Make API request to generate story
+    fetch('/generate-story', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ textIndex: selectedIndex })
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Hide loading indicator
+        document.getElementById('story-loading').classList.add('hidden');
+        
+        if (data.success) {
+            // Display the original text and generated story
+            document.getElementById('original-text').textContent = data.originalText;
+            
+            // Format the story text with paragraphs
+            const formattedStory = data.generatedStory
+                .split('\n')
+                .filter(para => para.trim() !== '')
+                .map(para => `<p>${para}</p>`)
+                .join('');
+                
+            document.getElementById('story-content').innerHTML = formattedStory;
+        } else {
+            // Show error message
+            document.getElementById('story-content').innerHTML = 
+                `<p class="error">Error: ${data.error || 'Failed to generate story'}</p>`;
+        }
+    })
+    .catch(error => {
+        console.error("Error generating story:", error);
+        document.getElementById('story-loading').classList.add('hidden');
+        document.getElementById('story-content').innerHTML = 
+            '<p class="error">An error occurred while generating the story. Please try again.</p>';
+    });
+}
+
+// Initialize the page
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('text-output').innerText = "Ready for recording. Choose a recording mode.";
+    
+    // Populate the text selector dropdown
+    populateTextSelector();
+    
+    // Add change listener to the selector
+    document.getElementById('text-selector').addEventListener('change', checkGenerateButtonState);
+});
+
+
 
 // Set up event handlers for recognition instance
 function setupRecognitionHandlers() {
@@ -234,7 +329,7 @@ function setupRecognitionHandlers() {
             document.getElementById('text-output').innerText = `Recording saved: "${currentTranscript.trim()}"`;
         } 
         else if (isAutoRecording) {
-            // CHANGE: Check if we're on the last cycle
+            // Check if we're on the last cycle
             if (currentCycle >= totalCycles) {
                 // If this is the last cycle, finish auto-recording
                 document.getElementById('text-output').innerText = `Auto-recording complete. All cycles finished.`;
@@ -276,6 +371,8 @@ function saveText(text) {
     .then(data => {
         if (data.success) {
             console.log("Text saved successfully!");
+            // Refresh the dropdown to include the new text
+            populateTextSelector();
         } else {
             console.error("Failed to save text.");
         }

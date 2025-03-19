@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Voice Recorder</title>
+    <title>Voice Recorder & Story Generator</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <h1>Voice Recorder</h1>
+    <h1>Voice Recorder & Gossip Generator</h1>
     
     <div class="text-container">
         <div id="text-output">Ready for recording. Choose a recording mode.</div>
@@ -21,6 +21,31 @@
         
         <div class="utility-controls">
             <button onclick="fetchStoredTexts()">Show Stored Texts</button>
+        </div>
+    </div>
+    
+    <!-- New section for story generation -->
+    <div class="story-section">
+        <h2>Generate a Story</h2>
+        <div class="story-controls">
+            <select id="text-selector">
+                <option value="">-- Select recorded text --</option>
+                <!-- Options will be populated dynamically -->
+            </select>
+            <button id="generate-story-btn" onclick="generateStory()">Generate Gossip</button>
+        </div>
+        
+        <div id="story-container" class="hidden">
+            <div class="story-box">
+                <h3>Original Text:</h3>
+                <p id="original-text"></p>
+                
+                <h3>Generated Story:</h3>
+                <div id="story-output">
+                    <div id="story-loading" class="hidden">Generating gossip...</div>
+                    <div id="story-content"></div>
+                </div>
+            </div>
         </div>
     </div>
     
