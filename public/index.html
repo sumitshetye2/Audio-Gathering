@@ -3,12 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Voice to Text</title>
+    <title>Voice Recorder</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <h1>Voice to Text Recorder</h1>
-    <div id="text-output"></div>
+    <h1>Voice Recorder</h1>
+    
+    <div class="text-container">
+        <div id="text-output">Ready for recording. Choose a recording mode.</div>
+    </div>
+    
+    <div class="button-container">
+        <div class="recording-controls">
+            <button id="manual-recording" onclick="toggleManualRecording()">Start Recording</button>
+            <button id="auto-recording" onclick="toggleAutoRecording()">Start Auto-Recording</button>
+        </div>
+        
+        <div class="utility-controls">
+            <button onclick="fetchStoredTexts()">Show Stored Texts</button>
+        </div>
+    </div>
+    
     <script src="script.js"></script>
 </body>
 </html>
