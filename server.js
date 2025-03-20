@@ -15,15 +15,26 @@ const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-const filePath = 'storedTexts.json';
+const storedTextsFilePath = 'storedTexts.json';
+const gossipFilePath = 'gossip.json'
 
 let storedTexts = [];
-if (fs.existsSync(filePath)) {
+if (fs.existsSync(storedTextsFilePath)) {
     try {
-        storedTexts = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+        storedTexts = JSON.parse(fs.readFileSync(storedTextsFilePath, 'utf-8'));
     } catch (error) {
         console.error("Error reading storedTexts.json:", error);
         storedTexts = [];
+    }
+}
+
+let storedGossip = [];
+if (fs.existsSync(gossipFilePath)) {
+    try {
+        storedGossip = JSON.parse(fs.readFileSync(gossipFilePath, 'utf-8'));
+    } catch (error) {
+        console.error("Error reading gossip.json:", error);
+        storedGossip = [];
     }
 }
 
@@ -34,6 +45,15 @@ function saveTextsToFile() {
         console.error("Error writing to storedTexts.json:", error);
     }
 }
+
+function saveGossipToFile() {
+    try {
+        fs.writeFileSync(gossipFilePath, JSON.stringify(storedGossip, null, 2), 'utf-8');
+    } catch (error) {
+        console.error("Error writing to gossip.json:", error);
+    }
+}
+
 
 app.post('/save', (req, res) => {
     const { text } = req.body;
@@ -73,6 +93,9 @@ app.post('/generate-story', async (req, res) => {
         const result = await model.generateContent(prompt);
         const response = await result.response;
         const story = response.text();
+
+        storedGossip.push(story);
+        saveGossipToFile();
 
         res.json({
             success: true,
