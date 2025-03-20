@@ -1,7 +1,10 @@
 {
   "dependencies": {
     "@google/generative-ai": "^0.24.0",
+    "axios": "^1.8.4",
     "dotenv": "^16.4.7",
+    "elevenlabs": "^1.54.0",
+    "elevenlabs-node": "^2.0.3",
     "express": "^4.21.2"
   }
 }
