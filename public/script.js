@@ -244,7 +244,7 @@ function generateStory() {
     // Show the story container and loading indicator
     document.getElementById('story-container').classList.remove('hidden');
     document.getElementById('story-loading').classList.remove('hidden');
-    document.getElementById('story-content').innerHTML = '';
+    //document.getElementById('story-content').innerHTML = '';
     
     // Make API request to generate story
     fetch('/generate-story', {
@@ -258,31 +258,83 @@ function generateStory() {
     .then(data => {
         // Hide loading indicator
         document.getElementById('story-loading').classList.add('hidden');
-        
+
         if (data.success) {
             // Display the original text and generated story
-            document.getElementById('original-text').textContent = data.originalText;
-            
+            const originalTextElement = document.createElement('p');
+            originalTextElement.textContent = `Original Text: ${data.originalText}`;
+            originalTextElement.style.fontStyle = 'italic';
+            originalTextElement.style.color = '#666';
+            originalTextElement.style.padding = '10px';
+            originalTextElement.style.backgroundColor = '#f0f0f0';
+            originalTextElement.style.borderRadius = '4px';
+            originalTextElement.style.marginBottom = '20px';
+
+            const storyContentElement = document.createElement('div');
+            storyContentElement.classList.add('story-box');
+
+            const storyHeader = document.createElement('h3');
+            storyHeader.textContent = 'Generated Gossip:';
+
             // Format the story text with paragraphs
             const formattedStory = data.generatedStory
                 .split('\n')
                 .filter(para => para.trim() !== '')
                 .map(para => `<p>${para}</p>`)
                 .join('');
-                
-            document.getElementById('story-content').innerHTML = formattedStory;
+
+            const storyParagraphs = document.createElement('div');
+            storyParagraphs.innerHTML = formattedStory;
+
+            storyContentElement.appendChild(originalTextElement);
+            storyContentElement.appendChild(storyHeader);
+            storyContentElement.appendChild(storyParagraphs);
+
+            // Add text-to-speech button
+            const ttsButton = document.createElement('button');
+            ttsButton.textContent = 'Listen to Gossip';
+            ttsButton.addEventListener('click', () => {
+                speakText(data.generatedStory);
+            });
+            storyContentElement.appendChild(ttsButton);
+
+            const storyOutput = document.getElementById('story-content');
+            storyOutput.prepend(storyContentElement); // Prepend the new story to the log
+
+            // Make the log scrollable
+            storyOutput.style.overflowY = 'auto'; // Enable vertical scrolling
+            storyOutput.style.maxHeight = '300px'; // Set a maximum height for the log
+
+            // Automatically speak the first time
+            if (storyOutput.children.length === 1) {
+                speakText(data.generatedStory);
+            }
         } else {
             // Show error message
-            document.getElementById('story-content').innerHTML = 
-                `<p class="error">Error: ${data.error || 'Failed to generate story'}</p>`;
+            const errorElement = document.createElement('p');
+            errorElement.classList.add('error');
+            errorElement.innerHTML = `Error: ${data.error || 'Failed to generate story'}`;
+            document.getElementById('story-content').appendChild(errorElement);
         }
     })
     .catch(error => {
         console.error("Error generating story:", error);
         document.getElementById('story-loading').classList.add('hidden');
-        document.getElementById('story-content').innerHTML = 
-            '<p class="error">An error occurred while generating the story. Please try again.</p>';
+        const errorElement = document.createElement('p');
+        errorElement.classList.add('error');
+        errorElement.textContent = 'An error occurred while generating the story. Please try again.';
+        document.getElementById('story-content').appendChild(errorElement);
     });
+}
+
+// Text to speech function
+function speakText(text) {
+    if ('speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(text);
+        window.speechSynthesis.speak(utterance);
+    } else {
+        alert('Text to speech not supported in your browser')
+    }
 }
 
 // Initialize the page
