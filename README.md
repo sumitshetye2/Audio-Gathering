@@ -6,7 +6,7 @@ Repository for a module I'm working on for CMPM 290A. It involves periodically g
 
 1. Copy the repository to your local machine
 
-2. In VSCode terminal (or any terminal) navigate to where you saved the files
+2. In VSCode terminal (or any terminal) navigate to the root directory where you saved the files
 
 3. run ```npm install``` to install the necessary dependencies
 4. run ```node server.js``` to start server
